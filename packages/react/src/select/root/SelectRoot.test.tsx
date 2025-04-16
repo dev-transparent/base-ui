@@ -765,4 +765,49 @@ describe('<Select.Root />', () => {
       );
     });
   });
+
+  it('resets selected index when value is set to undefined without a undefined item', async () => {
+    function App() {
+      const [value, setValue] = React.useState<string | undefined>(undefined);
+      return (
+        <div>
+          <button onClick={() => setValue('1')}>1</button>
+          <button onClick={() => setValue('2')}>2</button>
+          <button onClick={() => setValue(undefined)}>null</button>
+          <Select.Root value={value} onValueChange={setValue}>
+            <Select.Trigger data-testid="trigger">
+              <Select.Value placeholder="Select a font" data-testid="value" />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Positioner>
+                <Select.Popup>
+                  <Select.Item value="1">1</Select.Item>
+                  <Select.Item value="2">2</Select.Item>
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          </Select.Root>
+        </div>
+      );
+    }
+
+    const { user } = await render(<App />);
+
+    await user.click(screen.getByRole('button', { name: '1' }));
+    expect(screen.getByTestId('value')).to.have.text('1');
+
+    await user.click(screen.getByRole('button', { name: '2' }));
+    expect(screen.getByTestId('value')).to.have.text('2');
+
+    await user.click(screen.getByRole('button', { name: 'null' }));
+    expect(screen.getByTestId('value')).to.have.text('Select a font');
+
+    await user.click(screen.getByTestId('trigger'));
+    await waitFor(() => {
+      expect(screen.queryByRole('option', { name: '2' })).not.to.have.attribute(
+        'data-selected',
+        '',
+      );
+    });
+  });
 });
